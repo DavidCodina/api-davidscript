@@ -103,7 +103,7 @@ app.get('/', (req, res) => {
   const body = req.body || {}
 
   return res.status(200).json({
-    message: 'Close PR without merging test.',
+    message: 'Close PR without merging + if condition',
     envTest: process.env.TEST,
     body: body
   })
