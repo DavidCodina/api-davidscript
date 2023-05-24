@@ -8,7 +8,7 @@ import testRoutes from './routes/testRoutes'
 dotenv.config()
 const app = express()
 
-let message = 'Whuddup!'
+const message = 'Whuddup!'
 console.log(message)
 
 ///////////////////////////////////////////////////////////////////////////
