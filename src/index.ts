@@ -103,7 +103,7 @@ app.get('/', (req, res) => {
   const body = req.body || {}
 
   return res.status(200).json({
-    message: 'Deployment Using Inclusive zip file.',
+    message: 'Deployment using specific Node engine version.',
     envTest: process.env.TEST,
     body: body
   })
