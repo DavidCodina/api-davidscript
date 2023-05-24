@@ -1,5 +1,4 @@
-# The name of this file can be anyting but needs to be .yml
-name: Build, Lint, Test, Deploy
+name: Build, Lint, Test
 
 # Whenever someone pushes to branch main then run the following job.
 on:
@@ -24,8 +23,8 @@ on:
     branches:
       - main
       - master
-      # - development
-      # - dev
+      - development
+      - dev
   workflow_dispatch:
 jobs:
   build:
@@ -109,56 +108,3 @@ jobs:
         run: npm ci
       - name: Run Tests
         run: npm test
-
-  ## Beanstalk Deploy
-  ## https://github.com/marketplace/actions/beanstalk-deploy
-  deploy:
-    #--------------------------------------------------------------------------
-    #
-    # By default, jobs run in parallel, while steps run sequentially.
-    # Thus you really don't want the deploy job to run as a
-    # parallel job to the testing job. You could fix this by making
-    # the deploy a step. Conversely, you could use the 'needs' keyword.
-    #
-    # Here I only truly need build, but also dont' want this
-    # to deploy unless lint and test are successful.
-    #
-    #--------------------------------------------------------------------------
-    needs: [build, lint, test]
-    name: Deploy
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout source code
-        uses: actions/checkout@v3
-      ## Linux command to create a zip folder.
-      - name: Generate deployment package
-        run: zip -r deploy.zip . -x '*.git*'
-      - name: Output Run ID
-        run: echo ${{ github.run_id }}
-      - name: Deploy to EB
-        uses: einaregilsson/beanstalk-deploy@v21
-        with:
-          aws_access_key: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws_secret_key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          application_name: api-davidscript
-          environment_name: api-davidscript-dev
-          ## https://stackoverflow.com/questions/54310050/how-to-version-build-artifacts-using-github-actions
-          version_label: '${{ github.run_id }}'
-          region: us-east-1
-          deployment_package: deploy.zip
-
-      # - name: Deploy to AWS Beanstalk
-      #   uses: actions/download-artifact@v3
-      #   with:
-      #     name: dist # Corresponds to the upload name
-      # - name: Verify dist artifact contents
-      #   run: ls
-
-  bonus:
-    needs: deploy
-    name: Bonus
-    runs-on: ubuntu-latest
-    steps:
-      # https://docs.github.com/en/actions/learn-github-actions/contexts
-      - name: Bonus -  output context of github
-        run: echo "${{ toJSON(github) }}"
