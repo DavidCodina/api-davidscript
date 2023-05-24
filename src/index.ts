@@ -103,7 +103,7 @@ app.get('/', (req, res) => {
   const body = req.body || {}
 
   return res.status(200).json({
-    message: 'if condition test 4',
+    message: 'push test 1',
     envTest: process.env.TEST,
     body: body
   })

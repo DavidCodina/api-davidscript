@@ -17,7 +17,7 @@ on:
   # trigger automatially on the first time.
   #
   #--------------------------------------------------------------------------
-  pull_request:
+  push:
     # https://github.com/orgs/community/discussions/26724
     # See here if you want to do it when the PR merge occurs, rather than when the PR is closed.
     # For now, I think it makes more sense to do it when the PR is closed.
@@ -29,16 +29,12 @@ on:
     #!
     #! There’s no way to specify that a workflow should be triggered when a pull request is merged.
     #! However, because a merged pull request always results in a push, you can use the push event instead.
-    types: [closed]
-
     branches:
       - main
       - master
   workflow_dispatch:
 jobs:
   build:
-    # https://docs.github.com/en/actions/learn-github-actions/expressions
-    if: github.event.pull_request.merged == true
     name: Build
     runs-on: ubuntu-latest
     strategy:
@@ -81,8 +77,6 @@ jobs:
 
   # https://github.com/marketplace/actions/beanstalk-deploy
   deploy:
-    # https://docs.github.com/en/actions/learn-github-actions/expressions
-    if: github.event.pull_request.merged == true
     needs: [build]
     name: Deploy
     runs-on: ubuntu-latest
