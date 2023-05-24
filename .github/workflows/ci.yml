@@ -1,6 +1,4 @@
-name: Build, Lint, Test
-
-# Whenever someone pushes to branch main then run the following job.
+name: Lint & Test
 on:
   # https://docs.github.com/en/actions/using-workflows
   # https://docs.github.com/en/actions/using-workflows/events-that-trigger-workflows
@@ -27,39 +25,6 @@ on:
       - dev
   workflow_dispatch:
 jobs:
-  build:
-    name: Build
-    runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        node-version: [18.x]
-    steps:
-      # This makes the code we've pushed to the branch available for our workflow.
-      # https://github.com/actions/checkout
-      - uses: actions/checkout@v3
-      - name: Use Node.js ${{ matrix.node-version }}
-        uses: actions/setup-node@v3
-        with:
-          node-version: ${{ matrix.node-version }}
-      # Cache dependencies. Must be done in all jobs that install dependencies.
-      # This seems to speed up the process by about 20s.
-      # https://www.udemy.com/course/github-actions-the-complete-guide/learn/lecture/34139976#overview
-      - name: Cache Dependencies
-        uses: actions/cache@v3
-        with:
-          path: ~/.npm
-          key: node_modules-${{ hashFiles('**/package-lock.json') }}
-      - name: Install Dependencies
-        run: npm ci
-      - name: Build Project
-        run: npm run build
-        # https://www.udemy.com/course/github-actions-the-complete-guide/learn/lecture/34139932#overview
-      - name: Upload artifacts
-        uses: actions/upload-artifact@v3
-        with:
-          name: dist # dist-files
-          path: dist
-
   lint: # The name of job is arbitrary.
     # The actual name used here is important because it allows us to search for
     # the correct status check when Requiring status checks to pass before merging.
@@ -77,6 +42,9 @@ jobs:
         uses: actions/setup-node@v3
         with:
           node-version: ${{ matrix.node-version }}
+      # Cache dependencies. Must be done in all jobs that install dependencies.
+      # This seems to speed up the process by about 20s.
+      # https://www.udemy.com/course/github-actions-the-complete-guide/learn/lecture/34139976#overview
       - name: Cache Dependencies
         uses: actions/cache@v3
         with:
