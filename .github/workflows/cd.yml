@@ -23,6 +23,7 @@ on:
     # https://github.com/orgs/community/discussions/26724
     # See here if you want to do it when the PR merge occurs, rather than when the PR is closed.
     # For now, I think it makes more sense to do it when the PR is closed.
+    # Why? Because a PR is automatically closed when it is merged.
     types: [closed]
 
     branches:
@@ -46,6 +47,12 @@ jobs:
     # to deploy unless lint and test are successful.
     #
     #--------------------------------------------------------------------------
+    #! build, lint, test, are now in the ci.yml worklow. Currently, I know of no
+    #! way of waiting on them here prior to deployment. Instead, I have a branch protection
+    #! rule set up for main that necessitates that those status checks have passed prior to
+    #! allowing a PR to be merged into main. Unfortunately, branch protection rules of this kind
+    #! are only allowed for private repositories for GitHub Team or Enterprise organization accounts.
+    #! Consquently, my repo is public.
     #! needs: [build, lint, test]
     name: Deploy
     runs-on: ubuntu-latest
