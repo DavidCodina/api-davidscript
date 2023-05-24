@@ -103,7 +103,7 @@ app.get('/', (req, res) => {
   const body = req.body || {}
 
   return res.status(200).json({
-    message: 'GitHub Deployment Test 3',
+    message: 'GitHub Deployment feature-2',
     envTest: process.env.TEST,
     body: body
   })
