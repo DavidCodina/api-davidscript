@@ -57,19 +57,22 @@ jobs:
       - name: Build Project
         run: npm run build
       #` Here what I actually want to do is generate the deployment package and make it an artifact
+      - name: Generate deployment package
+        run: zip -r deploy.zip . -x './src/*' './node_modules/*' '*.git*' 'tsconfig.json'
 
       # https://www.udemy.com/course/github-actions-the-complete-guide/learn/lecture/34139932#overview
       - name: Upload artifacts
         uses: actions/upload-artifact@v3
         with:
-          name: dist # dist-files
-          path: dist
+          name: deploy-zip-file
+          path: deploy.zip
       - name: List Contents Of Directory
         run: ls
 
   ## Beanstalk Deploy
   ## https://github.com/marketplace/actions/beanstalk-deploy
   # deploy:
+  #   needs: build
   #   #--------------------------------------------------------------------------
   #   #
   #   # By default, jobs run in parallel, while steps run sequentially.
