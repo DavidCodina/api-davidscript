@@ -2,6 +2,9 @@
   "name": "api-davidscript",
   "version": "0.0.1",
   "description": "",
+  "engines": {
+    "node": ">=18"
+  },
   "scripts": {
     "dev": "nodemon src/index.ts",
     "start": "node dist/index.js",

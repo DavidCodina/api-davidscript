@@ -91,7 +91,25 @@ jobs:
       # At this point, we have the deploy.zip in the current environment. This ncludes dist, package.json and package-lock.json
       # This should be sufficient to upload to Elastic Beanstalk without the 01_build.config.
       # This is based on the assumption that Elastic Beanstalk will automatically install the packages
-      # and run the start script (It worked).
+      # and run the start script:
+      #
+      #   https://docs.aws.amazon.com/elasticbeanstalk/latest/dg/nodejs-platform-dependencies.html
+      #   If Elastic Beanstalk detects [package.json] and a node_modules directory isn't present,
+      #   Elastic Beanstalk runs npm install...  Elastic Beanstalk also uses the start command
+      #   to start your application.
+      #
+      #   Use the engines keyword in the package.json file to specify the Node.js version that you
+      #   want your application to use. You can also specify a version range using npm notation.
+      #   See also: https://docs.npmjs.com/cli/v9/configuring-npm/package-json#engines
+      #
+      #      "engines": { "node" : ">=18" }
+      #
+      # If you don't explicitly specify an engine in the package.json, it's fine. It just means
+      # that in the Deploy job you'll see output like this:
+      #
+      #   18:14:48 INFO: Instance deployment: You didn't specify a Node.js version in the 'package.json'
+      #   file in your source bundle. The deployment didn't install a specific Node.js version.
+      #
       #
       # Why do I prefer to do all the work here. The idea is that I would rather have all the content pre-built
       # and packaged in GitHub BEFORE sending it off. That's a better approach than splitting the tasks up between
