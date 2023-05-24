@@ -103,7 +103,7 @@ app.get('/', (req, res) => {
   const body = req.body || {}
 
   return res.status(200).json({
-    message: 'Deployment zip 4!',
+    message: 'Deployment without 01_build.config.',
     envTest: process.env.TEST,
     body: body
   })
