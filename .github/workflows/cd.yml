@@ -17,16 +17,18 @@ on:
   # trigger automatially on the first time.
   #
   #--------------------------------------------------------------------------
-  pull_request:
+  push:
     # https://github.com/orgs/community/discussions/26724
     # See here if you want to do it when the PR merge occurs, rather than when the PR is closed.
     # For now, I think it makes more sense to do it when the PR is closed.
     # Why? Because a PR is automatically closed when it is merged.
-    #! [closed] may not actually be the correct solution. Why? What happens if you
-    #! create a PR, and then close it without merging it. Presumably, that would trigger
-    #! the deployment, which would be VERY BAD!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-    types: [closed]
-
+    #! Initially, I was using types: [closed]. This made it so when the PR was merged
+    #! it would automatically run the Deploy action. Why? Because merging a PR automatically
+    #! closes the PR. That said, closing a PR without merging will also run this job, which
+    #! is definitely NOT what you want to have happen.
+    #!
+    #! There’s no way to specify that a workflow should be triggered when a pull request is merged.
+    #! However, because a merged pull request always results in a push, you can use the push event instead.
     branches:
       - main
       - master
@@ -110,6 +112,9 @@ jobs:
       #   18:14:48 INFO: Instance deployment: You didn't specify a Node.js version in the 'package.json'
       #   file in your source bundle. The deployment didn't install a specific Node.js version.
       #
+      # Note: After adding { "node" : ">=18" }, the next deploy had a momentary warning:
+      # Environment update finished, but health is Red and health status is Degraded.
+      # It recovered, but if it happens again, it may be related to that.
       #
       # Why do I prefer to do all the work here. The idea is that I would rather have all the content pre-built
       # and packaged in GitHub BEFORE sending it off. That's a better approach than splitting the tasks up between
