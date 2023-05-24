@@ -29,7 +29,9 @@ on:
     #!
     #! There’s no way to specify that a workflow should be triggered when a pull request is merged.
     #! However, because a merged pull request always results in a push, you can use the push event instead.
-    if: github.event_name == 'pull_request' && github.event.action == 'closed' && github.event.pull_request.merged == true
+    types: [closed]
+    # https://docs.github.com/en/actions/learn-github-actions/expressions
+    if: github.event.pull_request.merged == true
 
     branches:
       - main
