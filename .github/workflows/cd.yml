@@ -17,24 +17,33 @@ on:
   # trigger automatially on the first time.
   #
   #--------------------------------------------------------------------------
-  push:
-    # https://github.com/orgs/community/discussions/26724
-    # See here if you want to do it when the PR merge occurs, rather than when the PR is closed.
-    # For now, I think it makes more sense to do it when the PR is closed.
-    # Why? Because a PR is automatically closed when it is merged.
-    #! Initially, I was using types: [closed]. This made it so when the PR was merged
-    #! it would automatically run the Deploy action. Why? Because merging a PR automatically
-    #! closes the PR. That said, closing a PR without merging will also run this job, which
-    #! is definitely NOT what you want to have happen.
-    #!
-    #! There’s no way to specify that a workflow should be triggered when a pull request is merged.
-    #! However, because a merged pull request always results in a push, you can use the push event instead.
+  #` push:
+  #* https://docs.github.com/en/actions/using-workflows/events-that-trigger-workflows#running-your-pull_request_target-workflow-when-a-pull-request-merges
+  pull_request_target: #* New
+    types:
+      - closed
+    #--------------------------------------------------------------------------
+    #
+    # Initially, I was using types: [closed]. This made it so when the PR was merged
+    # it would automatically run the Deploy action. Why? Because merging a PR automatically
+    # closes the PR. That said, closing a PR without merging will ALSO run the job, which
+    # is definitely NOT what you want to happen.
+    #
+    # There’s no way to specify that a workflow should be triggered when a pull request is merged.
+    # However, because a merged pull request always results in a push, you can use the push event instead.
+    # See here for more info: https://github.com/orgs/community/discussions/26724
+    #
+    # This is intended to work in conjunction with a branch protection rule on main/master
+    # that only allows pushes  via a PR merge and NOT a direct push.
+    #
+    #--------------------------------------------------------------------------
     branches:
       - main
       - master
   workflow_dispatch:
 jobs:
   build:
+    if: github.event.pull_request.merged == true #* New..........
     name: Build
     runs-on: ubuntu-latest
     strategy:
@@ -77,6 +86,7 @@ jobs:
 
   # https://github.com/marketplace/actions/beanstalk-deploy
   deploy:
+    if: github.event.pull_request.merged == true #* New..........
     needs: [build]
     name: Deploy
     runs-on: ubuntu-latest
