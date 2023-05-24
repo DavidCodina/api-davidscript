@@ -103,7 +103,7 @@ app.get('/', (req, res) => {
   const body = req.body || {}
 
   return res.status(200).json({
-    message: 'Deployment without 01_build.config.',
+    message: 'Deployment Using Inclusive zip file.',
     envTest: process.env.TEST,
     body: body
   })

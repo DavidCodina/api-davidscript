@@ -57,10 +57,12 @@ jobs:
         run: npm ci
       - name: Build Project
         run: npm run build
-      #` Here it probably makes more sense to include certain files rather than exclude.
-      #` That way we will not have to worry about the accidental addition of other files in the future.
+      # It  makes more sense to INCLUDE certain files rather than EXCLUDE others.
+      # That way we will not have to worry about the accidental addition of some files/folders in the future.
+      ## Whether or not we actually need cron.yaml is up for debate, but I'm including it for now.
       - name: Generate deployment package
-        run: zip -r deploy.zip . -x './src/*' './node_modules/*' '*.git*' 'tsconfig.json'
+        # run: zip -r deploy.zip . -x './src/*' './node_modules/*' '*.git*' 'tsconfig.json'
+        run: zip -r deploy.zip . -i './dist/*' 'package.json' 'package-lock.json' 'cron.yaml'
 
       # https://www.udemy.com/course/github-actions-the-complete-guide/learn/lecture/34139932#overview
       - name: Upload artifacts
@@ -68,23 +70,11 @@ jobs:
         with:
           name: deploy-folder
           path: deploy.zip
-      - name: List Contents Of Directory
+      - name: List Contents Of Current Environment
         run: ls
 
-  ## Beanstalk Deploy
-  ## https://github.com/marketplace/actions/beanstalk-deploy
+  # https://github.com/marketplace/actions/beanstalk-deploy
   deploy:
-    #--------------------------------------------------------------------------
-    #
-    # By default, jobs run in parallel, while steps run sequentially.
-    # Thus you really don't want the deploy job to run as a
-    # parallel job to the testing job. You could fix this by making
-    # the deploy a step. Conversely, you could use the 'needs' keyword.
-    #
-    # Here I only truly need build, but also dont' want this
-    # to deploy unless lint and test are successful.
-    #
-    #--------------------------------------------------------------------------
     needs: [build]
     name: Deploy
     runs-on: ubuntu-latest
@@ -93,15 +83,24 @@ jobs:
         uses: actions/download-artifact@v3
         with:
           name: deploy-folder
-      - name: Verify deploy.zip is in directory now.
-        run: ls
+      - name: List Contents Of Current Environment
+        run: ls # Should just be deploy.zip
 
-      #` At this point, we have the deploy.zip, which includes dist, package.json and package-lock.json
-      #` This should be sufficient to upload to Elastic Beanstalk without the 01_build.config
-      #` This is based on the assumption that elastic beanstalk will automatically install the packages
-      #` and run the start script.
-      - name: Output Run ID
-        run: echo ${{ github.run_id }}
+      #--------------------------------------------------------------------------
+      #
+      # At this point, we have the deploy.zip in the current environment. This ncludes dist, package.json and package-lock.json
+      # This should be sufficient to upload to Elastic Beanstalk without the 01_build.config.
+      # This is based on the assumption that Elastic Beanstalk will automatically install the packages
+      # and run the start script (It worked).
+      #
+      # Why do I prefer to do all the work here. The idea is that I would rather have all the content pre-built
+      # and packaged in GitHub BEFORE sending it off. That's a better approach than splitting the tasks up between
+      # GitHub and AWS.
+      #
+      #--------------------------------------------------------------------------
+
+      # - name: Output Run ID
+      #   run: echo ${{ github.run_id }}
       - name: Deploy to ELastic Beanstalk
         uses: einaregilsson/beanstalk-deploy@v21
         with:
@@ -109,23 +108,7 @@ jobs:
           aws_secret_key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           application_name: api-davidscript
           environment_name: api-davidscript-dev
-          ## https://stackoverflow.com/questions/54310050/how-to-version-build-artifacts-using-github-actions
+          # https://stackoverflow.com/questions/54310050/how-to-version-build-artifacts-using-github-actions
           version_label: '${{ github.run_id }}'
           region: us-east-1
           deployment_package: deploy.zip
-
-  # - name: Deploy to AWS Beanstalk
-  #   uses: actions/download-artifact@v3
-  #   with:
-  #     name: dist # Corresponds to the upload name
-  # - name: Verify dist artifact contents
-  #   run: ls
-
-  # # bonus:
-  # #   needs: deploy
-  # #   name: Bonus
-  # #   runs-on: ubuntu-latest
-  # #   steps:
-  # #     # https://docs.github.com/en/actions/learn-github-actions/contexts
-  # #     - name: Bonus -  output context of github
-  # #       run: echo "${{ toJSON(github) }}"
