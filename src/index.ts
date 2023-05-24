@@ -103,7 +103,7 @@ app.get('/', (req, res) => {
   const body = req.body || {}
 
   return res.status(200).json({
-    message: 'Deployment zip 3!',
+    message: 'Deployment zip 4!',
     envTest: process.env.TEST,
     body: body
   })
