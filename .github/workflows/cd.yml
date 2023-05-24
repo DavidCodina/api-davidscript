@@ -64,7 +64,7 @@ jobs:
       - name: Upload artifacts
         uses: actions/upload-artifact@v3
         with:
-          name: deploy
+          name: deploy-folder
           path: deploy.zip
       - name: List Contents Of Directory
         run: ls
@@ -87,12 +87,12 @@ jobs:
     name: Deploy
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout source code
-        uses: actions/checkout@v3
+      # - name: Checkout source code
+      #   uses: actions/checkout@v3
       - name: Get deploy.zip
         uses: actions/download-artifact@v3
         with:
-          name: deploy
+          name: deploy-folder
       - name: Verify deploy.zip is in directory now.
         run: ls
 
