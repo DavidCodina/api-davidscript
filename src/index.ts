@@ -103,7 +103,7 @@ app.get('/', (req, res) => {
   const body = req.body || {}
 
   return res.status(200).json({
-    message: 'pull_request_target test 1',
+    message: 'Hello Chris!',
     envTest: process.env.TEST,
     body: body
   })

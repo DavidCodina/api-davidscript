@@ -6,8 +6,6 @@ on:
 
   #--------------------------------------------------------------------------
   #
-  # Note:
-  #
   # https://www.udemy.com/course/github-actions-the-complete-guide/learn/lecture/34138630#overview
   # Pull Request from contributors that forked will not occur automatically, but instead require approval.
   # Why? Because obviously you don't want to automatically deploy from forked users.
@@ -17,24 +15,32 @@ on:
   # trigger automatially on the first time.
   #
   #--------------------------------------------------------------------------
-  #` push:
-  #* https://docs.github.com/en/actions/using-workflows/events-that-trigger-workflows#running-your-pull_request_target-workflow-when-a-pull-request-merges
-  pull_request_target: #* New
+  pull_request_target:
     types:
       - closed
     #--------------------------------------------------------------------------
     #
-    # Initially, I was using types: [closed]. This made it so when the PR was merged
+    # Initially, I was using pull_request with types: [closed]. This made it so when the PR was merged
     # it would automatically run the Deploy action. Why? Because merging a PR automatically
     # closes the PR. That said, closing a PR without merging will ALSO run the job, which
     # is definitely NOT what you want to happen.
     #
-    # There’s no way to specify that a workflow should be triggered when a pull request is merged.
+    # There’s no way to specify that a workflow should be triggered when a pull_request is merged
+    # (emphasis on when using pull_requests specifically).
+    #
     # However, because a merged pull request always results in a push, you can use the push event instead.
     # See here for more info: https://github.com/orgs/community/discussions/26724
-    #
     # This is intended to work in conjunction with a branch protection rule on main/master
-    # that only allows pushes  via a PR merge and NOT a direct push.
+    # that only allows pushes via a PR merge and NOT a direct push.
+    #
+    # Update: In the same discussion (https://github.com/orgs/community/discussions/26724),
+    # at the very bottom, someone mentions using pull_request_target, closed, and if condtions.
+    # https://docs.github.com/en/actions/using-workflows/events-that-trigger-workflows#running-your-pull_request_target-workflow-when-a-pull-request-merges
+    # This actually seems like the best approach, and is officially documented.
+    #
+    # Finally, it's worth considering whether you want this to be automated at all.
+    # It may just be safer to always make it a manual operation in GitHub. In other words,
+    # only trigger the workflow through workflow_dispatch.
     #
     #--------------------------------------------------------------------------
     branches:
