@@ -1,6 +1,4 @@
 name: Deploy
-
-# Whenever someone pushes to branch main then run the following job.
 on:
   # https://docs.github.com/en/actions/using-workflows
   # https://docs.github.com/en/actions/using-workflows/events-that-trigger-workflows
@@ -24,6 +22,9 @@ on:
     # See here if you want to do it when the PR merge occurs, rather than when the PR is closed.
     # For now, I think it makes more sense to do it when the PR is closed.
     # Why? Because a PR is automatically closed when it is merged.
+    #! [closed] may not actually be the correct solution. Why? What happens if you
+    #! create a PR, and then close it without merging it. Presumably, that would trigger
+    #! the deployment, which would be VERY BAD!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     types: [closed]
 
     branches:
@@ -31,63 +32,98 @@ on:
       - master
   workflow_dispatch:
 jobs:
-  #! Currently the Deploy step is running whenever a pull_request is submitted/sychronized.
-  #! That is wrong! It should ONLY happen when a pull request is accepted.
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        node-version: [18.x]
+    steps:
+      # This makes the code we've pushed to the branch available for our workflow.
+      # https://github.com/actions/checkout
+      - uses: actions/checkout@v3
+      - name: Use Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v3
+        with:
+          node-version: ${{ matrix.node-version }}
+
+      # - name: Cache Dependencies
+      #   uses: actions/cache@v3
+      #   with:
+      #     path: ~/.npm
+      #     key: node_modules-${{ hashFiles('**/package-lock.json') }}
+      - name: Install Dependencies
+        run: npm ci
+      - name: Build Project
+        run: npm run build
+      #` Here what I actually want to do is generate the deployment package and make it an artifact
+
+      # https://www.udemy.com/course/github-actions-the-complete-guide/learn/lecture/34139932#overview
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: dist # dist-files
+          path: dist
+      - name: List Contents Of Directory
+        run: ls
+
   ## Beanstalk Deploy
   ## https://github.com/marketplace/actions/beanstalk-deploy
-  deploy:
-    #--------------------------------------------------------------------------
-    #
-    # By default, jobs run in parallel, while steps run sequentially.
-    # Thus you really don't want the deploy job to run as a
-    # parallel job to the testing job. You could fix this by making
-    # the deploy a step. Conversely, you could use the 'needs' keyword.
-    #
-    # Here I only truly need build, but also dont' want this
-    # to deploy unless lint and test are successful.
-    #
-    #--------------------------------------------------------------------------
-    #! build, lint, test, are now in the ci.yml worklow. Currently, I know of no
-    #! way of waiting on them here prior to deployment. Instead, I have a branch protection
-    #! rule set up for main that necessitates that those status checks have passed prior to
-    #! allowing a PR to be merged into main. Unfortunately, branch protection rules of this kind
-    #! are only allowed for private repositories for GitHub Team or Enterprise organization accounts.
-    #! Consquently, my repo is public.
-    #! needs: [build, lint, test]
-    name: Deploy
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout source code
-        uses: actions/checkout@v3
-      ## Linux command to create a zip folder.
-      - name: Generate deployment package
-        run: zip -r deploy.zip . -x '*.git*'
-      - name: Output Run ID
-        run: echo ${{ github.run_id }}
-      - name: Deploy to ELastic Beanstalk
-        uses: einaregilsson/beanstalk-deploy@v21
-        with:
-          aws_access_key: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws_secret_key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          application_name: api-davidscript
-          environment_name: api-davidscript-dev
-          ## https://stackoverflow.com/questions/54310050/how-to-version-build-artifacts-using-github-actions
-          version_label: '${{ github.run_id }}'
-          region: us-east-1
-          deployment_package: deploy.zip
-
-      # - name: Deploy to AWS Beanstalk
-      #   uses: actions/download-artifact@v3
-      #   with:
-      #     name: dist # Corresponds to the upload name
-      # - name: Verify dist artifact contents
-      #   run: ls
-
-  # bonus:
-  #   needs: deploy
-  #   name: Bonus
+  # deploy:
+  #   #--------------------------------------------------------------------------
+  #   #
+  #   # By default, jobs run in parallel, while steps run sequentially.
+  #   # Thus you really don't want the deploy job to run as a
+  #   # parallel job to the testing job. You could fix this by making
+  #   # the deploy a step. Conversely, you could use the 'needs' keyword.
+  #   #
+  #   # Here I only truly need build, but also dont' want this
+  #   # to deploy unless lint and test are successful.
+  #   #
+  #   #--------------------------------------------------------------------------
+  #   #! build, lint, test, are now in the ci.yml worklow. Currently, I know of no
+  #   #! way of waiting on them here prior to deployment. Instead, I have a branch protection
+  #   #! rule set up for main that necessitates that those status checks have passed prior to
+  #   #! allowing a PR to be merged into main. Unfortunately, branch protection rules of this kind
+  #   #! are only allowed for private repositories for GitHub Team or Enterprise organization accounts.
+  #   #! Consquently, my repo is public.
+  #   #! needs: [build, lint, test]
+  #   name: Deploy
   #   runs-on: ubuntu-latest
   #   steps:
-  #     # https://docs.github.com/en/actions/learn-github-actions/contexts
-  #     - name: Bonus -  output context of github
-  #       run: echo "${{ toJSON(github) }}"
+  #     - name: Checkout source code
+  #       uses: actions/checkout@v3
+  #     ## Linux command to create a zip folder.
+  #     ## Ultimately, I want to pair this down. No node_modules, etc...
+  #     ## zip -r deploy.zip . -x './node_modules/*' '*.git*'
+  #     - name: Generate deployment package
+  #       run: zip -r deploy.zip . -x '*.git*'
+  #     - name: Output Run ID
+  #       run: echo ${{ github.run_id }}
+  #     - name: Deploy to ELastic Beanstalk
+  #       uses: einaregilsson/beanstalk-deploy@v21
+  #       with:
+  #         aws_access_key: ${{ secrets.AWS_ACCESS_KEY_ID }}
+  #         aws_secret_key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+  #         application_name: api-davidscript
+  #         environment_name: api-davidscript-dev
+  #         ## https://stackoverflow.com/questions/54310050/how-to-version-build-artifacts-using-github-actions
+  #         version_label: '${{ github.run_id }}'
+  #         region: us-east-1
+  #         deployment_package: deploy.zip
+
+  # - name: Deploy to AWS Beanstalk
+  #   uses: actions/download-artifact@v3
+  #   with:
+  #     name: dist # Corresponds to the upload name
+  # - name: Verify dist artifact contents
+  #   run: ls
+
+  # # bonus:
+  # #   needs: deploy
+  # #   name: Bonus
+  # #   runs-on: ubuntu-latest
+  # #   steps:
+  # #     # https://docs.github.com/en/actions/learn-github-actions/contexts
+  # #     - name: Bonus -  output context of github
+  # #       run: echo "${{ toJSON(github) }}"
