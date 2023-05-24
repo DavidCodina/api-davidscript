@@ -110,6 +110,9 @@ jobs:
       #   18:14:48 INFO: Instance deployment: You didn't specify a Node.js version in the 'package.json'
       #   file in your source bundle. The deployment didn't install a specific Node.js version.
       #
+      # Note: After adding { "node" : ">=18" }, the next deploy had a momentary warning:
+      # Environment update finished, but health is Red and health status is Degraded.
+      # It recovered, but if it happens again, it may be related to that.
       #
       # Why do I prefer to do all the work here. The idea is that I would rather have all the content pre-built
       # and packaged in GitHub BEFORE sending it off. That's a better approach than splitting the tasks up between
