@@ -72,8 +72,8 @@ jobs:
           node-version: ${{ matrix.node-version }}
       # Cache dependencies. Must be done in all jobs that install dependencies.
       # This seems to speed up the process by about 20s.
-      #` https://www.udemy.com/course/github-actions-the-complete-guide/learn/lecture/34139976#overview
-      #` Video 92: https://www.udemy.com/course/github-actions-the-complete-guide/learn/lecture/34140170#overview
+      # Video 73: https://www.udemy.com/course/github-actions-the-complete-guide/learn/lecture/34139976#overview
+      # Video 92: https://www.udemy.com/course/github-actions-the-complete-guide/learn/lecture/34140170#overview
 
       - name: Cache Dependencies
         id: cache
@@ -86,7 +86,7 @@ jobs:
         run: |
           echo "node_modules was not cached. Proceeding with 'npm ci' command."
           npm ci
-      - name: Install Dependencies (Skipped)
+      - name: Skipping Dependency Installation
         if: steps.cache.outputs.cache-hit == 'true'
         run: echo "node_modules was previously cached. Skipping 'npm ci' command."
 
@@ -117,7 +117,7 @@ jobs:
         run: |
           echo "node_modules was not cached. Proceeding with 'npm ci' command."
           npm ci
-      - name: Install Dependencies (Skipped)
+      - name: Skipping Dependency Installation
         if: steps.cache.outputs.cache-hit == 'true'
         run: echo "node_modules was previously cached. Skipping 'npm ci' command."
 

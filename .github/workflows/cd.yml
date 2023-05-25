@@ -69,7 +69,10 @@ jobs:
           node-version: ${{ matrix.node-version }}
       #--------------------------------------------------------------------------
       #
-      # https://docs.github.com/en/actions/using-workflows/caching-dependencies-to-speed-up-workflows
+      # Docs:     https://docs.github.com/en/actions/using-workflows/caching-dependencies-to-speed-up-workflows
+      # Video 73: https://www.udemy.com/course/github-actions-the-complete-guide/learn/lecture/34139976#overview
+      # Video 92: https://www.udemy.com/course/github-actions-the-complete-guide/learn/lecture/34140170#overview
+      #
       # Multiple workflow runs in a repository can share caches. A cache created for a branch in a workflow
       # run can be accessed and restored from another workflow run for the same repository and branch.
       # DC: Presumablyk, this means that the dependencies installed from the Lint & Test jobs in the ci.yml
@@ -92,7 +95,10 @@ jobs:
       # We do this:
       #
       #--------------------------------------------------------------------------
-
+      #! I'm not entirely convinced that this is pulling the cache from the ci.yml
+      #! workflow. It may be pulling it from previous instances of the cd.yml workflow.
+      #! To test this, add some trivial dependency to node_modules then see what happens in
+      #! the resulting pipeline.
       - name: Cache Dependencies
         id: cache
         uses: actions/cache@v3
@@ -104,7 +110,7 @@ jobs:
         run: |
           echo "node_modules was not cached. Proceeding with 'npm ci' command."
           npm ci
-      - name: Install Dependencies (Skipped)
+      - name: Skipping Dependency Installation
         if: steps.cache.outputs.cache-hit == 'true'
         run: echo "node_modules was previously cached. Skipping 'npm ci' command."
 
@@ -189,7 +195,7 @@ jobs:
           region: us-east-1
           deployment_package: deploy.zip
 
-  # This is just a dumb example of using success() / failure() conditions.
+  # This is just a dumb example of implementing jobs based on success() / failure() conditions.
   success_report:
     name: Success Report
     needs: [build, deploy]
