@@ -103,7 +103,7 @@ app.get('/', (req, res) => {
   const body = req.body || {}
 
   return res.status(200).json({
-    message: 'Success/Failure condition.',
+    message: 'Update to cd.yml.',
     envTest: process.env.TEST,
     body: body
   })

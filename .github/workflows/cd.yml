@@ -169,7 +169,7 @@ jobs:
       - name: Message
         run: echo "It succeeded!"
       - name: Show GitHub Data
-        run: echo "${{ toJSON(gitub) }}"
+        run: echo "${{toJSON(github)}}"
 
   failure_report:
     name: Failure Report
@@ -180,4 +180,4 @@ jobs:
       - name: Message
         run: echo "It failed!"
       - name: Show GitHub Data
-        run: echo "${{ toJSON(gitub) }}"
+        run: echo "${{toJSON(github)}}"
