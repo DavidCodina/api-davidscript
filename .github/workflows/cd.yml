@@ -102,8 +102,9 @@ jobs:
 
       - name: Install Dependencies
         if: steps.cache.outputs.cache-hit != 'true'
-        # run: echo "node_modules was not cached. Proceeding with 'npm ci' command."
-        run: npm ci
+        run: |
+          echo "node_modules was not cached. Proceeding with 'npm ci' command."
+          npm ci
 
       # - name: Cache Dependencies
       #   uses: actions/cache@v3
