@@ -95,6 +95,8 @@ jobs:
         run: |
           echo "node_modules was not cached. Proceeding with 'npm ci' command."
           npm ci
+
+      - name: Install Dependencies (Skipped)
         if: steps.cache.outputs.cache-hit == 'true'
         run: echo "node_modules was previously cached. Skipping 'npm ci' command."
 
@@ -126,6 +128,8 @@ jobs:
         run: |
           echo "node_modules was not cached. Proceeding with 'npm ci' command."
           npm ci
+
+      - name: Install Dependencies (Skipped)
         if: steps.cache.outputs.cache-hit == 'true'
         run: echo "node_modules was previously cached. Skipping 'npm ci' command."
 
