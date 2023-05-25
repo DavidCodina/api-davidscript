@@ -67,20 +67,49 @@ jobs:
         uses: actions/setup-node@v3
         with:
           node-version: ${{ matrix.node-version }}
+      #--------------------------------------------------------------------------
+      #
       # https://docs.github.com/en/actions/using-workflows/caching-dependencies-to-speed-up-workflows
       # Multiple workflow runs in a repository can share caches. A cache created for a branch in a workflow
       # run can be accessed and restored from another workflow run for the same repository and branch.
       # DC: Presumablyk, this means that the dependencies installed from the Lint & Test jobs in the ci.yml
       # workfow can be used here.
+      #
+      # I thought this was caching node_modules, but in video 92. He says it would be even faster if we
+      # cached the node_modules, thereby implying that we're not doing that. Thus, I need to go back and
+      # review the initial videos on caching. I think we are actually caching node_modules, but the npm ci
+      # command still needs to run and check for a cached folder. The idea here is that instead of doing this:
+      #
+      # - name: Cache Dependencies
+      #   uses: actions/cache@v3
+      #   with:
+      #     path: ~/.npm
+      #     key: node_modules-${{ hashFiles('**/package-lock.json') }}
+      #
+      # - name: Install Dependencies
+      #   run: npm ci
+      #
+      # We do this:
+      #
+      #--------------------------------------------------------------------------
+
       - name: Cache Dependencies
+        id: cache
         uses: actions/cache@v3
         with:
-          path: ~/.npm
+          path: node_modules
           key: node_modules-${{ hashFiles('**/package-lock.json') }}
+
       - name: Install Dependencies
+        if: steps.cache.outputs.cache-hit != 'true'
+        run: echo "node_modules was not cached. Proceeding with 'npm ci' command."
         run: npm ci
+
+
+
       - name: Build Project
         run: npm run build
+
       # It  makes more sense to INCLUDE certain files rather than EXCLUDE others.
       # That way we will not have to worry about the accidental addition of some files/folders in the future.
       ## Whether or not we actually need cron.yaml is up for debate, but I'm including it for now.
@@ -168,8 +197,6 @@ jobs:
     steps:
       - name: Message
         run: echo "It succeeded!"
-      - name: Show GitHub Data
-        run: echo "${{toJSON(github)}}"
 
   failure_report:
     name: Failure Report
@@ -179,5 +206,3 @@ jobs:
     steps:
       - name: Message
         run: echo "It failed!"
-      - name: Show GitHub Data
-        run: echo "${{toJSON(github)}}"
