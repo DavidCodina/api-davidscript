@@ -166,8 +166,10 @@ jobs:
     if: success()
     runs-on: ubuntu-latest
     steps:
-      - name: Random Message
+      - name: Message
         run: echo "It succeeded!"
+      - name: Show GitHub Data
+        run: echo "${{ toJSON(gitub) }}"
 
   failure_report:
     name: Failure Report
@@ -177,3 +179,5 @@ jobs:
     steps:
       - name: Message
         run: echo "It failed!"
+      - name: Show GitHub Data
+        run: echo "${{ toJSON(gitub) }}"
