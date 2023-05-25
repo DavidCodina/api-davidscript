@@ -72,14 +72,34 @@ jobs:
           node-version: ${{ matrix.node-version }}
       # Cache dependencies. Must be done in all jobs that install dependencies.
       # This seems to speed up the process by about 20s.
-      # https://www.udemy.com/course/github-actions-the-complete-guide/learn/lecture/34139976#overview
+      #` https://www.udemy.com/course/github-actions-the-complete-guide/learn/lecture/34139976#overview
+      #` Video 92: https://www.udemy.com/course/github-actions-the-complete-guide/learn/lecture/34140170#overview
+
+      # - name: Cache Dependencies
+      #   uses: actions/cache@v3
+      #   with:
+      #     path: ~/.npm
+      #     key: node_modules-${{ hashFiles('**/package-lock.json') }}
+      # - name: Install Dependencies
+      #   run: npm ci
+
       - name: Cache Dependencies
+        id: cache
         uses: actions/cache@v3
         with:
-          path: ~/.npm
+          path: node_modules
           key: node_modules-${{ hashFiles('**/package-lock.json') }}
+
       - name: Install Dependencies
-        run: npm ci
+        if: steps.cache.outputs.cache-hit != 'true'
+        run: |
+          echo "node_modules was not cached. Proceeding with 'npm ci' command."
+          npm ci
+
+      - name: Install Dependencies (Skipped)
+        if: steps.cache.outputs.cache-hit == 'true'
+        run: echo "node_modules was previously cached. Skipping 'npm ci' command."
+
       - name: Lint src
         run: npm run lint
 
@@ -95,12 +115,31 @@ jobs:
         uses: actions/setup-node@v3
         with:
           node-version: ${{ matrix.node-version }}
+
       - name: Cache Dependencies
+        id: cache
         uses: actions/cache@v3
         with:
-          path: ~/.npm
+          path: node_modules
           key: node_modules-${{ hashFiles('**/package-lock.json') }}
+
       - name: Install Dependencies
-        run: npm ci
+        if: steps.cache.outputs.cache-hit != 'true'
+        run: |
+          echo "node_modules was not cached. Proceeding with 'npm ci' command."
+          npm ci
+
+      - name: Install Dependencies (Skipped)
+        if: steps.cache.outputs.cache-hit == 'true'
+        run: echo "node_modules was previously cached. Skipping 'npm ci' command."
+
+      # - name: Cache Dependencies
+      #   uses: actions/cache@v3
+      #   with:
+      #     path: ~/.npm
+      #     key: node_modules-${{ hashFiles('**/package-lock.json') }}
+      # - name: Install Dependencies
+      #   run: npm ci
+
       - name: Run Tests
         run: npm test

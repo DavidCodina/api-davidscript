@@ -103,7 +103,7 @@ app.get('/', (req, res) => {
   const body = req.body || {}
 
   return res.status(200).json({
-    message: 'Update to cd.yml.',
+    message: 'Update to dependency caching.',
     envTest: process.env.TEST,
     body: body
   })
