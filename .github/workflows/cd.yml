@@ -48,6 +48,9 @@ on:
       - master
   workflow_dispatch:
 jobs:
+  #` It probably makes more sense to run a build in ci.yml.
+  #` That way, we're not waiting until the merge is approved and/or
+  #` the app is deployed to realize the build failed.
   build:
     if: github.event.pull_request.merged == true
     name: Build
@@ -96,7 +99,7 @@ jobs:
 
   # https://github.com/marketplace/actions/beanstalk-deploy
   deploy:
-    if: github.event.pull_request.merged == true #* New..........
+    if: github.event.pull_request.merged == true
     needs: [build]
     name: Deploy
     runs-on: ubuntu-latest
@@ -155,3 +158,22 @@ jobs:
           version_label: '${{ github.run_id }}'
           region: us-east-1
           deployment_package: deploy.zip
+
+  # This is just a dumb example of using success() / failure() conditions.
+  success_report:
+    name: Success Report
+    needs: [build, deploy]
+    if: success()
+    runs-on: ubuntu-latest
+    steps:
+      - name: Random Message
+        run: echo "It succeeded!"
+
+  failure_report:
+    name: Failure Report
+    needs: [build, deploy]
+    if: failure()
+    runs-on: ubuntu-latest
+    steps:
+      - name: Message
+        run: echo "It failed!"
