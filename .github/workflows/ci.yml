@@ -24,6 +24,18 @@ on:
       - development
       - dev
   workflow_dispatch:
+env:
+  #--------------------------------------------------------------------------
+  #
+  # Environment variables defined here are available in all jobs
+  # for that workflow (unless overrided). As just alluded to, the
+  # env property is also configurable at the job level (and step level).
+  #
+  # These values are not necessarily available through .env.XXX. However,
+  # in Udemy / Academind tutorial he was demonstrating them as if they were.
+  #
+  #--------------------------------------------------------------------------
+  DATE: 'May 25, 2023'
 jobs:
   lint: # The name of job is arbitrary.
     # The actual name used here is important because it allows us to search for
