@@ -24,6 +24,34 @@ on:
       - development
       - dev
   workflow_dispatch:
+env:
+  #--------------------------------------------------------------------------
+  #
+  # Environment variables defined here are available in all jobs
+  # for that workflow (unless overrided). As just alluded to, the
+  # env property is also configurable at the job level (and step level).
+  #
+  # In order to consume the variables in this file, use $DATE, etc. (at least in Linux).
+  # Can also be used in a string  "date: $DATE" or "date: ${{ env.DATE }}"
+  #
+  # These values are not available through process.env.XXX. However,
+  # in Udemy / Academind tutorial he was demonstrating them as if they were.
+  # He indicated that the variables here would be available when the application
+  # runs on a runner hosted by GitHub actions. His demo was actually building the app,
+  # and running it in the workflow with: npm start. Doing that is super contrived, and
+  # not at all practical.
+  #
+  # Note GitHub Actions also has some default environment variables that it sets:
+  # https://docs.github.com/en/actions/learn-github-actions/variables#default-environment-variables
+  #
+  # The actual way to set real env variables is through Elastic Beanstalk.
+  # This can be done using the CLI: eb setenv URI=mongodb...
+  # However, it may ask you to associate a branch to the environment. That's fine,
+  # but I prefer to do it manually in the AWS Console. This can be found in the
+  # Elastic Beanstalk --> [Enviroment] --> Configuration --> "Updates, monitoring, and logging"
+  #
+  #--------------------------------------------------------------------------
+  DATE: 'May 25, 2023'
 jobs:
   lint: # The name of job is arbitrary.
     # The actual name used here is important because it allows us to search for

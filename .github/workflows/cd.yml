@@ -6,8 +6,6 @@ on:
 
   #--------------------------------------------------------------------------
   #
-  # Note:
-  #
   # https://www.udemy.com/course/github-actions-the-complete-guide/learn/lecture/34138630#overview
   # Pull Request from contributors that forked will not occur automatically, but instead require approval.
   # Why? Because obviously you don't want to automatically deploy from forked users.
@@ -17,22 +15,41 @@ on:
   # trigger automatially on the first time.
   #
   #--------------------------------------------------------------------------
-  pull_request:
-    # https://github.com/orgs/community/discussions/26724
-    # See here if you want to do it when the PR merge occurs, rather than when the PR is closed.
-    # For now, I think it makes more sense to do it when the PR is closed.
-    # Why? Because a PR is automatically closed when it is merged.
-    #! [closed] may not actually be the correct solution. Why? What happens if you
-    #! create a PR, and then close it without merging it. Presumably, that would trigger
-    #! the deployment, which would be VERY BAD!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-    types: [closed]
-
+  pull_request_target:
+    types:
+      - closed
+    #--------------------------------------------------------------------------
+    #
+    # Initially, I was using pull_request with types: [closed]. This made it so when the PR was merged
+    # it would automatically run the Deploy action. Why? Because merging a PR automatically
+    # closes the PR. That said, closing a PR without merging will ALSO run the job, which
+    # is definitely NOT what you want to happen.
+    #
+    # There’s no way to specify that a workflow should be triggered when a pull_request is merged
+    # (emphasis on when using pull_requests specifically).
+    #
+    # However, because a merged pull request always results in a push, you can use the push event instead.
+    # See here for more info: https://github.com/orgs/community/discussions/26724
+    # This is intended to work in conjunction with a branch protection rule on main/master
+    # that only allows pushes via a PR merge and NOT a direct push.
+    #
+    # Update: In the same discussion (https://github.com/orgs/community/discussions/26724),
+    # at the very bottom, someone mentions using pull_request_target, closed, and if condtions.
+    # https://docs.github.com/en/actions/using-workflows/events-that-trigger-workflows#running-your-pull_request_target-workflow-when-a-pull-request-merges
+    # This actually seems like the best approach, and is officially documented.
+    #
+    # Finally, it's worth considering whether you want this to be automated at all.
+    # It may just be safer to always make it a manual operation in GitHub. In other words,
+    # only trigger the workflow through workflow_dispatch.
+    #
+    #--------------------------------------------------------------------------
     branches:
       - main
       - master
   workflow_dispatch:
 jobs:
   build:
+    if: github.event.pull_request.merged == true
     name: Build
     runs-on: ubuntu-latest
     strategy:
@@ -40,88 +57,101 @@ jobs:
         node-version: [18.x]
     steps:
       # This makes the code we've pushed to the branch available for our workflow.
+      # Basically, it loads the contents of the branch into the current environment.
       # https://github.com/actions/checkout
       - uses: actions/checkout@v3
       - name: Use Node.js ${{ matrix.node-version }}
         uses: actions/setup-node@v3
         with:
           node-version: ${{ matrix.node-version }}
-
-      # - name: Cache Dependencies
-      #   uses: actions/cache@v3
-      #   with:
-      #     path: ~/.npm
-      #     key: node_modules-${{ hashFiles('**/package-lock.json') }}
+      # https://docs.github.com/en/actions/using-workflows/caching-dependencies-to-speed-up-workflows
+      # Multiple workflow runs in a repository can share caches. A cache created for a branch in a workflow
+      # run can be accessed and restored from another workflow run for the same repository and branch.
+      # DC: Presumablyk, this means that the dependencies installed from the Lint & Test jobs in the ci.yml
+      # workfow can be used here.
+      - name: Cache Dependencies
+        uses: actions/cache@v3
+        with:
+          path: ~/.npm
+          key: node_modules-${{ hashFiles('**/package-lock.json') }}
       - name: Install Dependencies
         run: npm ci
       - name: Build Project
         run: npm run build
-      #` Here what I actually want to do is generate the deployment package and make it an artifact
+      # It  makes more sense to INCLUDE certain files rather than EXCLUDE others.
+      # That way we will not have to worry about the accidental addition of some files/folders in the future.
+      ## Whether or not we actually need cron.yaml is up for debate, but I'm including it for now.
       - name: Generate deployment package
-        run: zip -r deploy.zip . -x './src/*' './node_modules/*' '*.git*' 'tsconfig.json'
+        # run: zip -r deploy.zip . -x './src/*' './node_modules/*' '*.git*' 'tsconfig.json'
+        run: zip -r deploy.zip . -i './dist/*' 'package.json' 'package-lock.json' 'cron.yaml'
 
       # https://www.udemy.com/course/github-actions-the-complete-guide/learn/lecture/34139932#overview
       - name: Upload artifacts
         uses: actions/upload-artifact@v3
         with:
-          name: deploy
+          name: deploy-folder
           path: deploy.zip
-      - name: List Contents Of Directory
+      - name: List Contents Of Current Environment
         run: ls
 
-  ## Beanstalk Deploy
-  ## https://github.com/marketplace/actions/beanstalk-deploy
+  # https://github.com/marketplace/actions/beanstalk-deploy
   deploy:
-    #--------------------------------------------------------------------------
-    #
-    # By default, jobs run in parallel, while steps run sequentially.
-    # Thus you really don't want the deploy job to run as a
-    # parallel job to the testing job. You could fix this by making
-    # the deploy a step. Conversely, you could use the 'needs' keyword.
-    #
-    # Here I only truly need build, but also dont' want this
-    # to deploy unless lint and test are successful.
-    #
-    #--------------------------------------------------------------------------
+    if: github.event.pull_request.merged == true #* New..........
     needs: [build]
     name: Deploy
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout source code
-        uses: actions/checkout@v3
       - name: Get deploy.zip
         uses: actions/download-artifact@v3
         with:
-          name: deploy
-      - name: Verify deploy.zip is in directory now.
-        run: ls
+          name: deploy-folder
+      - name: List Contents Of Current Environment
+        run: ls # Should just be deploy.zip
+
+      #--------------------------------------------------------------------------
+      #
+      # At this point, we have the deploy.zip in the current environment. This ncludes dist, package.json and package-lock.json
+      # This should be sufficient to upload to Elastic Beanstalk without the 01_build.config.
+      # This is based on the assumption that Elastic Beanstalk will automatically install the packages
+      # and run the start script:
+      #
+      #   https://docs.aws.amazon.com/elasticbeanstalk/latest/dg/nodejs-platform-dependencies.html
+      #   If Elastic Beanstalk detects [package.json] and a node_modules directory isn't present,
+      #   Elastic Beanstalk runs npm install...  Elastic Beanstalk also uses the start command
+      #   to start your application.
+      #
+      #   Use the engines keyword in the package.json file to specify the Node.js version that you
+      #   want your application to use. You can also specify a version range using npm notation.
+      #   See also: https://docs.npmjs.com/cli/v9/configuring-npm/package-json#engines
+      #
+      #      "engines": { "node" : ">=18" }
+      #
+      # If you don't explicitly specify an engine in the package.json, it's fine. It just means
+      # that in the Deploy job you'll see output like this:
+      #
+      #   18:14:48 INFO: Instance deployment: You didn't specify a Node.js version in the 'package.json'
+      #   file in your source bundle. The deployment didn't install a specific Node.js version.
+      #
+      # Note: After adding { "node" : ">=18" }, the next deploy had a momentary warning:
+      # Environment update finished, but health is Red and health status is Degraded.
+      # It recovered, but if it happens again, it may be related to that.
+      #
+      # Why do I prefer to do all the work here. The idea is that I would rather have all the content pre-built
+      # and packaged in GitHub BEFORE sending it off. That's a better approach than splitting the tasks up between
+      # GitHub and AWS.
+      #
+      #--------------------------------------------------------------------------
 
       # - name: Output Run ID
       #   run: echo ${{ github.run_id }}
-      # - name: Deploy to ELastic Beanstalk
-      #   uses: einaregilsson/beanstalk-deploy@v21
-      #   with:
-      #     aws_access_key: ${{ secrets.AWS_ACCESS_KEY_ID }}
-      #     aws_secret_key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-      #     application_name: api-davidscript
-      #     environment_name: api-davidscript-dev
-      #     ## https://stackoverflow.com/questions/54310050/how-to-version-build-artifacts-using-github-actions
-      #     version_label: '${{ github.run_id }}'
-      #     region: us-east-1
-      #     deployment_package: deploy.zip
-
-  # - name: Deploy to AWS Beanstalk
-  #   uses: actions/download-artifact@v3
-  #   with:
-  #     name: dist # Corresponds to the upload name
-  # - name: Verify dist artifact contents
-  #   run: ls
-
-  # # bonus:
-  # #   needs: deploy
-  # #   name: Bonus
-  # #   runs-on: ubuntu-latest
-  # #   steps:
-  # #     # https://docs.github.com/en/actions/learn-github-actions/contexts
-  # #     - name: Bonus -  output context of github
-  # #       run: echo "${{ toJSON(github) }}"
+      - name: Deploy to ELastic Beanstalk
+        uses: einaregilsson/beanstalk-deploy@v21
+        with:
+          aws_access_key: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws_secret_key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          application_name: api-davidscript
+          environment_name: api-davidscript-dev
+          # https://stackoverflow.com/questions/54310050/how-to-version-build-artifacts-using-github-actions
+          version_label: '${{ github.run_id }}'
+          region: us-east-1
+          deployment_package: deploy.zip

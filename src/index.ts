@@ -103,7 +103,7 @@ app.get('/', (req, res) => {
   const body = req.body || {}
 
   return res.status(200).json({
-    message: 'Deployment zip 3!',
+    message: 'Added cached dependency from ci workflow to cd workflow!',
     envTest: process.env.TEST,
     body: body
   })
