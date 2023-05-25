@@ -99,24 +99,14 @@ jobs:
         with:
           path: node_modules
           key: node_modules-${{ hashFiles('**/package-lock.json') }}
-
       - name: Install Dependencies
         if: steps.cache.outputs.cache-hit != 'true'
         run: |
           echo "node_modules was not cached. Proceeding with 'npm ci' command."
           npm ci
-
       - name: Install Dependencies (Skipped)
         if: steps.cache.outputs.cache-hit == 'true'
         run: echo "node_modules was previously cached. Skipping 'npm ci' command."
-
-      # - name: Cache Dependencies
-      #   uses: actions/cache@v3
-      #   with:
-      #     path: ~/.npm
-      #     key: node_modules-${{ hashFiles('**/package-lock.json') }}
-      # - name: Install Dependencies
-      #   run: npm ci
 
       - name: Build Project
         run: npm run build
