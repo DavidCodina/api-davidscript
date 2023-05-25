@@ -4,6 +4,7 @@ import * as dotenv from 'dotenv'
 // Usage: console.log('Cookies: ', JSON.stringify(req.cookies, null, 2))
 import cookieParser from 'cookie-parser'
 import testRoutes from './routes/testRoutes'
+import { v4 as uuid } from 'uuid'
 
 dotenv.config()
 const app = express()
@@ -103,8 +104,9 @@ app.get('/', (req, res) => {
   const body = req.body || {}
 
   return res.status(200).json({
-    message: 'Added cached dependency from ci workflow to cd workflow!',
+    message: 'Skip Step Test 2.',
     envTest: process.env.TEST,
+    id: uuid(),
     body: body
   })
 })
