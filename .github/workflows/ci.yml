@@ -46,6 +46,9 @@ env:
   #
   # The actual way to set real env variables is through Elastic Beanstalk.
   # This can be done using the CLI: eb setenv URI=mongodb...
+  # However, it may ask you to associate a branch to the environment. That's fine,
+  # but I prefer to do it manually in the AWS Console. This can be found in the
+  # Elastic Beanstalk --> [Enviroment] --> Configuration --> "Updates, monitoring, and logging"
   #
   #--------------------------------------------------------------------------
   DATE: 'May 25, 2023'
