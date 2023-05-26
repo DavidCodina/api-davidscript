@@ -4,14 +4,16 @@ import express from 'express'
 import mongoose from 'mongoose'
 import cors from 'cors'
 import * as dotenv from 'dotenv'
-// Usage: console.log('Cookies: ', JSON.stringify(req.cookies, null, 2))
-import cookieParser from 'cookie-parser'
+import cookieParser from 'cookie-parser' // Usage: console.log('Cookies: ', JSON.stringify(req.cookies, null, 2))
 
 // Custom imports
-import testRoutes from './routes/testRoutes'
-import noteRoutes from './routes/noteRoutes'
-import { connectDB } from './config/db'
-import { echo } from 'functions/echo'
+import testRoutes from 'routes/testRoutes'
+
+//# The noteRoutes and noteController are all set up,
+//# Next I need to build out the rest of the CRUD
+//# Ultimatley, I want to switch to a BLOG CRUD.
+import noteRoutes from 'routes/noteRoutes'
+import { connectDB } from 'config/db'
 
 ///////////////////////////////////////////////////////////////////////////
 //
@@ -21,7 +23,8 @@ import { echo } from 'functions/echo'
 // This just seems to work, with one exception, it won't update when .js files are changed.
 // The solution was to add a nodemon.json file:
 //
-// { "watch": ["src"], "ext": "*" }
+//   { "watch": ["src"], "ext": "*" }
+//
 //
 // Or just do "dev": "nodemon src/index.ts -e '*'",
 //
@@ -31,9 +34,11 @@ import { echo } from 'functions/echo'
 //
 //  "build:watch": "tsc && (concurrently \"tsc -w\" \"tsc-alias -w\")"
 //
+//
 // Thus our dev script must include: \"nodemon dist/index.js\" like this:
 //
 //   "dev": "tsc && (concurrently \"tsc -w\" \"tsc-alias -w\" \"nodemon dist/index.js\")",
+//
 //
 // If you want, you can add a delay to nodemon. This will prevent nodemon from restarting several times:
 //
@@ -90,8 +95,6 @@ connectDB()
 //
 ///////////////////////////////////////////////////////////////////////////
 
-// let x = 2
-
 /* ======================
   CORS Global Middleware
 ====================== */
@@ -145,9 +148,10 @@ Other Global Middleware
 app.use(express.json()) // Needed for reading req.body.
 app.use(express.urlencoded({ extended: false })) // For handling FormData
 app.use(cookieParser())
-// This allows static assets to be used..
-// For example, when the index.html is served, it uses: <link rel="stylesheet" href="./styles/main.css" />
-app.use('/', express.static(path.join(__dirname, '/public'))) // For serving static files (CSS, etc.)
+
+// Serve static files. For example, when the index.html is served,
+// it uses: <link rel="stylesheet" href="./styles/main.css" />
+app.use('/', express.static(path.join(__dirname, '/public')))
 
 /* ======================
 
@@ -175,23 +179,6 @@ app.use('/', express.static(path.join(__dirname, '/public'))) // For serving sta
 app.get('^/$|/index(.html)?', (req, res) => {
   return res.status(200).sendFile(path.join(__dirname, '/views', 'index.html'))
 })
-
-app.get('/echo', (req, res) => {
-  return res.status(200).json({
-    message: echo('Hello David')
-  })
-})
-
-// app.get('/', (req, res) => {
-//   const body = req.body || {}
-
-//   return res.status(200).json({
-//     message: 'Skip Step Test 2.',
-//     envTest: process.env.TEST,
-//     id: uuid(),
-//     body: body
-//   })
-// })
 
 /* ======================
         Routes

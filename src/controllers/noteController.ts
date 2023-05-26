@@ -1,6 +1,6 @@
 import { Request, Response } from 'express'
 import { ObjectId } from 'mongodb'
-import Note from '../models/noteModel'
+import Note from 'models/noteModel'
 
 /* ====================== 
       getNotes()
