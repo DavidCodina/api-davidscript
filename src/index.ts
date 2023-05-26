@@ -4,7 +4,8 @@ import * as dotenv from 'dotenv'
 // Usage: console.log('Cookies: ', JSON.stringify(req.cookies, null, 2))
 import cookieParser from 'cookie-parser'
 import testRoutes from './routes/testRoutes'
-import { v4 as uuid } from 'uuid'
+
+import path from 'path'
 
 dotenv.config()
 const app = express()
@@ -95,21 +96,29 @@ Other Global Middleware
 app.use(express.json()) // Needed for reading req.body.
 app.use(express.urlencoded({ extended: false })) // For handling FormData
 app.use(cookieParser())
+// This allows static assets to be used.
+// For example, when the index.html is served, it uses: <link rel="stylesheet" href="./styles/main.css" />
+app.use('/', express.static(path.join(__dirname, '/public'))) // For serving static files (CSS, etc.)
 
 /* ======================
 
 ====================== */
-
-app.get('/', (req, res) => {
-  const body = req.body || {}
-
-  return res.status(200).json({
-    message: 'Skip Step Test 2.',
-    envTest: process.env.TEST,
-    id: uuid(),
-    body: body
-  })
+// Dave Gray : MERN Stack Project video 2 at 21:00 uses the regex.
+// https://www.youtube.com/watch?v=H-9l-gTq-C4&list=PL0Zuz27SZ-6P4dQUsoDatjEGpmBpcOW8V&index=2
+app.get('^/$|/index(.html)?', (req, res) => {
+  return res.status(200).sendFile(path.join(__dirname, '/views', 'index.html'))
 })
+
+// app.get('/', (req, res) => {
+//   const body = req.body || {}
+
+//   return res.status(200).json({
+//     message: 'Skip Step Test 2.',
+//     envTest: process.env.TEST,
+//     id: uuid(),
+//     body: body
+//   })
+// })
 
 /* ======================
         Routes

@@ -99,6 +99,12 @@ jobs:
       #! workflow. It may be pulling it from previous instances of the cd.yml workflow.
       #! To test this, add some trivial dependency to node_modules then see what happens in
       #! the resulting pipeline.
+      #!
+      #! In fact, when I added uuid(), then ran ci.yml it installed in both jobs.
+      #! Also, and more importantly, the subsequent build job in cd.yml also installed
+      #! dependencies. This indicates to me that either I don't really understand how
+      #! dependency caching across jobs works, or that I need to read the docs and fix
+      #! something.
       - name: Cache Dependencies
         id: cache
         uses: actions/cache@v3
