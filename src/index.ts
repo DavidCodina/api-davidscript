@@ -4,7 +4,6 @@ import * as dotenv from 'dotenv'
 // Usage: console.log('Cookies: ', JSON.stringify(req.cookies, null, 2))
 import cookieParser from 'cookie-parser'
 import testRoutes from './routes/testRoutes'
-import { v4 as uuid } from 'uuid'
 
 import path from 'path'
 
