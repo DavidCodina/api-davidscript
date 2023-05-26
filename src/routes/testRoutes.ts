@@ -8,7 +8,8 @@ const router = Router()
 
 router.get('/', (_req: Request, res: Response, _next: NextFunction) => {
   return res.status(200).json({
-    message: "Call to '/test' worked!"
+    message: "Call to '/test' worked!",
+    environment: process.env.NODE_ENV || '???'
   })
 })
 

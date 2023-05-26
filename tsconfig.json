@@ -5,7 +5,14 @@
     // I'm using tsc-alias because tsconfig-paths didn't work for me. You may run into issues with jest:
     // https://medium.com/@fmoessle/typescript-paths-with-ts-node-ts-node-dev-and-jest-671deacf6428
     "paths": {
-      "functions/*": ["functions/*"]
+      "models/*": ["models/*"],
+      "views/*": ["views/*"],
+      "controllers/*": ["controllers/*"],
+      "middleware/*": ["middleware/*"],
+      "functions/*": ["functions/*"],
+      "config/*": ["config/*"],
+      "public/*": ["public/*"],
+      "routes/*": ["routes/*"]
     },
     "strict": true,
     "allowJs": true,
