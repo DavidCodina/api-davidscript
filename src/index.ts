@@ -103,8 +103,26 @@ app.use('/', express.static(path.join(__dirname, '/public'))) // For serving sta
 /* ======================
 
 ====================== */
+///////////////////////////////////////////////////////////////////////////
+//
 // Dave Gray : MERN Stack Project video 2 at 21:00 uses the regex.
 // https://www.youtube.com/watch?v=H-9l-gTq-C4&list=PL0Zuz27SZ-6P4dQUsoDatjEGpmBpcOW8V&index=2
+// Gotcha: the build process uses tsc, which does not copy .html, .css, etc.
+// You can probably solve this using esbuild to transpile the code.
+// However, if you know exactly what files and folders you want to include, you
+// can modify the package.json build command as follows. That said, cp may not work
+// in windows systems. If that's the case, then you can use the copyfiles package.
+//
+//   https://vccolombo.github.io/blog/tsc-how-to-copy-non-typescript-files-when-building/
+//
+//   "add-public-and-views-to-dist": "cp -r src/public src/views dist",
+//   "build": "rimraf dist && tsc && tsc-alias && npm run add-public-and-views-to-dist",
+//
+//
+// https://vccolombo.github.io/blog/tsc-how-to-copy-non-typescript-files-when-building/
+//
+///////////////////////////////////////////////////////////////////////////
+
 app.get('^/$|/index(.html)?', (req, res) => {
   return res.status(200).sendFile(path.join(__dirname, '/views', 'index.html'))
 })
