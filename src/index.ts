@@ -1,17 +1,66 @@
+// Third-party imports
+import path from 'path'
 import express from 'express'
+import mongoose from 'mongoose'
 import cors from 'cors'
 import * as dotenv from 'dotenv'
 // Usage: console.log('Cookies: ', JSON.stringify(req.cookies, null, 2))
 import cookieParser from 'cookie-parser'
-import testRoutes from './routes/testRoutes'
 
-import path from 'path'
+// Custom imports
+import testRoutes from './routes/testRoutes'
+import noteRoutes from './routes/noteRoutes'
+import { connectDB } from './config/db'
+import { echo } from 'functions/echo'
+
+///////////////////////////////////////////////////////////////////////////
+//
+// Gotcha regarding nodemon:
+//
+// The dev script is simply: "nodemon src/index.ts"
+// This just seems to work, with one exception, it won't update when .js files are changed.
+// The solution was to add a nodemon.json file:
+//
+// { "watch": ["src"], "ext": "*" }
+//
+// Or just do "dev": "nodemon src/index.ts -e '*'",
+//
+// That fixes the issue of watching non-ts files, but then we still need
+// to be able to use alias paths through ts-alias. The docs for tsc-alias
+// suggest this for watching changes to the files.
+//
+//  "build:watch": "tsc && (concurrently \"tsc -w\" \"tsc-alias -w\")"
+//
+// Thus our dev script must include: \"nodemon dist/index.js\" like this:
+//
+//   "dev": "tsc && (concurrently \"tsc -w\" \"tsc-alias -w\" \"nodemon dist/index.js\")",
+//
+// If you want, you can add a delay to nodemon. This will prevent nodemon from restarting several times:
+//
+//   [3] [nodemon] restarting due to changes...
+//   [3] [nodemon] restarting due to changes...
+//   [3] [nodemon] restarting due to changes...
+//   [3] [nodemon] restarting due to changes...
+//   [3] [nodemon] restarting due to changes...
+//
+//
+// I actually don't think we need to explicitly tell nodemon to look at dist/index.js, so I omitted that part.
+// Finally, I added the script that manually adds views and public folders to the dist.
+//
+//  "dev": "tsc && (concurrently \"tsc -w\" \"tsc-alias -w\" \"npm run add-public-and-views-to-dist\" \"nodemon --delay 0.25\")",
+//
+//
+// And that's how it's done! This solution works fine, but eventually, I would like to move the build process
+// over to esbuild, remove "add-public-and-views-to-dist" and then update what the dev script does.
+//
+///////////////////////////////////////////////////////////////////////////
 
 dotenv.config()
 const app = express()
+connectDB()
 
-const message = 'Whuddup!'
-console.log(message)
+// const message = 'Whuddup!'
+// console.log(message)
 
 ///////////////////////////////////////////////////////////////////////////
 //
@@ -96,7 +145,7 @@ Other Global Middleware
 app.use(express.json()) // Needed for reading req.body.
 app.use(express.urlencoded({ extended: false })) // For handling FormData
 app.use(cookieParser())
-// This allows static assets to be used.
+// This allows static assets to be used..
 // For example, when the index.html is served, it uses: <link rel="stylesheet" href="./styles/main.css" />
 app.use('/', express.static(path.join(__dirname, '/public'))) // For serving static files (CSS, etc.)
 
@@ -127,6 +176,12 @@ app.get('^/$|/index(.html)?', (req, res) => {
   return res.status(200).sendFile(path.join(__dirname, '/views', 'index.html'))
 })
 
+app.get('/echo', (req, res) => {
+  return res.status(200).json({
+    message: echo('Hello David')
+  })
+})
+
 // app.get('/', (req, res) => {
 //   const body = req.body || {}
 
@@ -143,14 +198,21 @@ app.get('^/$|/index(.html)?', (req, res) => {
 ====================== */
 
 app.use('/test', testRoutes)
+app.use('/notes', noteRoutes)
 
 /* ======================
 
 ====================== */
 
-app.use((req, res, _next) => {
+// I've also seen people do this:
+//
+// app.use((req, res, _next) => {
+//   return res.status(404).json({ error: 'Not Found' })
+// })
+
+app.all('*', (req, res) => {
   return res.status(404).json({
-    error: 'Not Found'
+    error: 'Not Found!'
   })
 })
 
@@ -168,6 +230,13 @@ app.use((req, res, _next) => {
 
 const PORT = process.env.PORT || 5000
 
-app.listen(PORT, () => {
-  console.log(`Example app listening on port ${PORT}`)
+mongoose.connection.once('open', () => {
+  console.log('\n\nCalling app.listen() now that the database is connected.')
+  app.listen(PORT, () => {
+    console.log(`\nServer listening on port ${PORT}!\n`)
+  })
+})
+
+mongoose.connection.on('error', (err) => {
+  console.log(err)
 })
