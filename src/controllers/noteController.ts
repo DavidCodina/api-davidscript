@@ -9,7 +9,7 @@ import Note from 'models/noteModel'
 // @route GET /notes
 // @access Private
 
-const getNotes = async (_req: Request, res: Response) => {
+export const getNotes = async (_req: Request, res: Response) => {
   try {
     const notes = await Note.find().lean()
 
@@ -50,7 +50,7 @@ const getNotes = async (_req: Request, res: Response) => {
 
 // This was not in the original tutorial, so I added it.
 
-const getNote = async (req: Request, res: Response) => {
+export const getNote = async (req: Request, res: Response) => {
   const { id } = req.params
 
   if (!id) {
@@ -102,51 +102,48 @@ const getNote = async (req: Request, res: Response) => {
 // @route POST /notes
 // @access Private
 
-const createNote = async (req: Request, res: Response) => {
-  return res.status(200).json({
-    message: 'I still need to build out the createNote functionality'
-  })
-  // const { userId, title, text } = req.body
+export const createNote = async (req: Request, res: Response) => {
+  const { title, text } = req.body
 
-  // if (!userId || !title || !text) {
-  //   return res.status(400).json({
-  //     data: null,
-  //     message: 'All fields are required',
-  //     success: false
-  //   })
-  // }
+  if (!title || !text) {
+    return res.status(400).json({
+      data: null,
+      message: 'All fields are required',
+      success: false
+    })
+  }
 
-  // try {
-  //   const duplicate = await Note.findOne({
-  //     title: new RegExp(`^${title}$`, 'i')
-  //   })
-  //     .lean()
-  //     .exec()
+  try {
+    const duplicate = await Note.findOne({
+      title: new RegExp(`^${title}$`, 'i')
+    })
+      .lean()
+      .exec()
 
-  //   if (duplicate) {
-  //     return res.status(409).json({
-  //       data: null,
-  //       message: 'A note with that title already exists!',
-  //       success: false
-  //     })
-  //   }
+    if (duplicate) {
+      return res.status(409).json({
+        data: null,
+        message: 'A note with that title already exists!',
+        success: false
+      })
+    }
 
-  //   const note = await Note.create({ userId, title, text })
+    const note = await Note.create({ title, text })
 
-  //   return res.status(201).json({
-  //     data: note,
-  //     message: 'New note created',
-  //     success: true
-  //   })
-  // } catch (err) {
-  //   console.log(err)
+    return res.status(201).json({
+      data: note,
+      message: 'New note created',
+      success: true
+    })
+  } catch (err: any) {
+    console.log(err)
 
-  //   return res.status(500).json({
-  //     data: null,
-  //     message: err.message,
-  //     success: false
-  //   })
-  // }
+    return res.status(500).json({
+      data: null,
+      message: err.message,
+      success: false
+    })
+  }
 }
 
 /* ====================== 
@@ -156,83 +153,77 @@ const createNote = async (req: Request, res: Response) => {
 // @route PATCH /notes
 // @access Private
 
-//# Only allow updates to occur when req.user.id === req.body.id,
-//# or the req.user is an admin.
+export const updateNote = async (req: Request, res: Response) => {
+  const { id, title, text } = req.body
 
-const updateNote = async (req: Request, res: Response) => {
-  return res.status(200).json({
-    message: 'I still need to build out the updateNote functionality'
-  })
-  // const { id, title, text } = req.body
+  if (!id) {
+    return res.status(400).json({
+      data: null,
+      message: "The note 'id' is required!",
+      success: false
+    })
+  }
 
-  // if (!id) {
-  //   return res.status(400).json({
-  //     data: null,
-  //     message: 'The note id is required!',
-  //     success: false
-  //   })
-  // }
+  if (!ObjectId.isValid(id)) {
+    return res.status(400).json({
+      data: null,
+      message: 'The ObjectId format is invalid!',
+      success: false
+    })
+  }
 
-  // if (!ObjectId.isValid(id)) {
-  //   return res.status(400).json({
-  //     data: null,
-  //     message: 'The ObjectId format is invalid!',
-  //     success: false
-  //   })
-  // }
+  try {
+    const note = await Note.findById(id).exec()
 
-  // try {
-  //   const note = await Note.findById(id).exec()
+    if (!note) {
+      return res.status(404).json({
+        data: null,
+        message: 'Note not found!',
+        success: false
+      })
+    }
 
-  //   if (!note) {
-  //     return res.status(404).json({
-  //       data: null,
-  //       message: 'Note not found!',
-  //       success: false
-  //     })
-  //   }
+    // Prohibit duplicate titles...
+    if (title && typeof title === 'string') {
+      const duplicate = await Note.findOne({
+        title: new RegExp(`^${title}$`, 'i')
+      })
+        .lean()
+        .exec()
 
-  //   // Prohibit duplicate titles...
-  //   if (title && typeof title === 'string') {
-  //     const duplicate = await Note.findOne({
-  //       title: new RegExp(`^${title}$`, 'i')
-  //     })
-  //       .lean()
-  //       .exec()
+      if (duplicate && duplicate?._id.toString() !== id) {
+        return res.status(409).json({
+          data: null,
+          message: 'That title is taken by another note!',
+          success: false
+        })
+      }
+    }
 
-  //     if (duplicate && duplicate?._id.toString() !== id) {
-  //       return res.status(409).json({
-  //         data: null,
-  //         message: 'That title is taken by another note!',
-  //         success: false
-  //       })
-  //     }
-  //   }
+    if (title && typeof title === 'string') {
+      note.title = title
+    }
 
-  //   if (title && typeof title === 'string') {
-  //     note.title = title
-  //   }
+    if (text && typeof title === 'string') {
+      note.text = text
+    }
 
-  //   if (text && typeof title === 'string') {
-  //     note.text = text
-  //   }
+    const updatedNote = await note.save()
 
-  //   const updatedNote = await note.save()
+    return res.status(200).json({
+      data: null, //# Send note back...
+      message: `'${updatedNote.title}' has been updated!`,
+      success: true
+    })
+  } catch (err: any) {
+    console.log(err)
 
-  //   return res.status(200).json({
-  //     data: null, //# Send note back...
-  //     message: `'${updatedNote.title}' updated!`,
-  //     success: true
-  //   })
-  // } catch (err) {
-  //   console.log(err)
-
-  //   return res.status(500).json({
-  //     data: null,
-  //     message: err.message,
-  //     success: false
-  //   })
-  // }
+    return res.status(500).json({
+      data: null,
+      message: err.message,
+      success: false
+    })
+  }
 }
 
 /* ====================== 
@@ -242,64 +233,50 @@ const updateNote = async (req: Request, res: Response) => {
 // @route DELETE /notes
 // @access Private
 
-//# Only allow updates to occur when req.user.id === req.body.id,
-//# or the req.user is an admin.
+export const deleteNote = async (req: Request, res: Response) => {
+  const { id } = req.body
 
-const deleteNote = async (req: Request, res: Response) => {
-  return res.status(200).json({
-    message: 'I still need to build out the deleteNote functionality'
-  })
-  // const { id } = req.body
+  if (!id) {
+    return res.status(400).json({
+      data: null,
+      message: "Note 'id' required!",
+      success: false
+    })
+  }
 
-  // if (!id) {
-  //   return res.status(400).json({
-  //     data: null,
-  //     message: 'Note id required',
-  //     success: false
-  //   })
-  // }
+  if (!ObjectId.isValid(id)) {
+    return res.status(400).json({
+      data: null,
+      message: 'The ObjectId format is invalid!',
+      success: false
+    })
+  }
 
-  // if (!ObjectId.isValid(id)) {
-  //   return res.status(400).json({
-  //     data: null,
-  //     message: 'The ObjectId format is invalid!',
-  //     success: false
-  //   })
-  // }
+  try {
+    const note = await Note.findById(id).exec()
 
-  // try {
-  //   const note = await Note.findById(id).exec()
+    if (!note) {
+      return res.status(404).json({
+        data: null,
+        message: 'Note not found!',
+        success: false
+      })
+    }
 
-  //   if (!note) {
-  //     return res.status(404).json({
-  //       data: null,
-  //       message: 'Note not found!',
-  //       success: false
-  //     })
-  //   }
+    const result = await note.deleteOne()
 
-  //   const result = await note.deleteOne()
+    res.status(200).json({
+      data: null, //# Sending back result is sometimes a good practice because the client can update itself without having to make another API call.
+      message: `The note '${result.title}' with an id of ${result._id} has been deleted.`,
+      success: true
+    })
+  } catch (err: any) {
+    console.log(err)
 
-  //   res.status(200).json({
-  //     data: null, //# Sending back result is sometimes a good practice because the client can update itself without having to make another API call.
-  //     message: `The note '${result.title}' with an id of ${result._id} has been deleted.`,
-  //     success: true
-  //   })
-  // } catch (err) {
-  //   console.log(err)
-
-  //   return res.status(500).json({
-  //     data: null,
-  //     message: err.message,
-  //     success: false
-  //   })
-  // }
-}
-
-module.exports = {
-  getNotes,
-  getNote,
-  createNote,
-  updateNote,
-  deleteNote
+    return res.status(500).json({
+      data: null,
+      message: err.message,
+      success: false
+    })
+  }
 }

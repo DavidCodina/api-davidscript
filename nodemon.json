@@ -1,0 +1,12 @@
+{
+  "watch": ["src"],
+  "ignore": [
+    "src/**/*.test.ts",
+    "src/**/*.spec.ts",
+    "__tests__",
+    "node_modules"
+  ],
+  "ext": "*",
+  "exec": "etsc && tsc-alias && node ./dist/index.js",
+  "legacyWatch": true
+}

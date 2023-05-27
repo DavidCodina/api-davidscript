@@ -1,5 +1,4 @@
 import {} from 'mongoose'
-
 import { Schema, model } from 'mongoose'
 
 /* ======================
