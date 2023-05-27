@@ -5,6 +5,8 @@ import mongoose from 'mongoose'
 import cors from 'cors'
 import * as dotenv from 'dotenv'
 import cookieParser from 'cookie-parser' // Usage: console.log('Cookies: ', JSON.stringify(req.cookies, null, 2))
+import colors from 'colors'
+import morgan from 'morgan'
 
 // Custom imports
 import testRoutes from 'routes/testRoutes'
@@ -12,6 +14,14 @@ import testRoutes from 'routes/testRoutes'
 //# The noteRoutes and noteController are all set up,
 //# Next I need to build out the rest of the CRUD
 //# Ultimatley, I want to switch to a BLOG CRUD.
+
+//# Add swagger
+
+//# Add TSDoc : https://tsdoc.org/
+
+//# Ultimately, when we switch the blogs to a user protected version, we
+//# will need to integrate with Cognito
+
 import noteRoutes from 'routes/noteRoutes'
 import { connectDB } from 'config/db'
 
@@ -63,6 +73,7 @@ import { connectDB } from 'config/db'
 dotenv.config()
 const app = express()
 connectDB()
+colors.enable()
 
 // const message = 'Whuddup!'
 // console.log(message)
@@ -145,6 +156,7 @@ app.use(cors())
 Other Global Middleware
 ====================== */
 
+app.use(morgan('dev')) // https://www.youtube.com/watch?v=QUbksAVFe8g
 app.use(express.json()) // Needed for reading req.body.
 app.use(express.urlencoded({ extended: false })) // For handling FormData
 app.use(cookieParser())
@@ -154,7 +166,7 @@ app.use(cookieParser())
 app.use('/', express.static(path.join(__dirname, '/public')))
 
 /* ======================
-
+      index.html
 ====================== */
 ///////////////////////////////////////////////////////////////////////////
 //
@@ -172,7 +184,8 @@ app.use('/', express.static(path.join(__dirname, '/public')))
 //   "build": "rimraf dist && tsc && tsc-alias && npm run add-public-and-views-to-dist",
 //
 //
-// https://vccolombo.github.io/blog/tsc-how-to-copy-non-typescript-files-when-building/
+// Note: Changes to the files in views and/or public will still not be evident until
+// you stop and restart the dev server.
 //
 ///////////////////////////////////////////////////////////////////////////
 
@@ -220,10 +233,13 @@ const PORT = process.env.PORT || 5000
 mongoose.connection.once('open', () => {
   console.log('\n\nCalling app.listen() now that the database is connected.')
   app.listen(PORT, () => {
-    console.log(`\nServer listening on port ${PORT}!\n`)
+    console.log(`Server listening on port ${PORT}!\n`.rainbow.bold)
   })
 })
 
+// This will probably never fire because db.ts catches it beforehand.
 mongoose.connection.on('error', (err) => {
-  console.log(err)
+  const message: any = // Typescript complains about the bright variants.
+    'Something went wrong with the mongoose connection (index.ts)!!!'
+  console.log('\n\n', message.brightRed.bold, '\n\n', err)
 })
