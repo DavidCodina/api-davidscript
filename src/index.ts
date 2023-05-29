@@ -9,6 +9,7 @@ import colors from 'colors'
 import morgan from 'morgan'
 
 // Custom imports
+
 import testRoutes from 'routes/testRoutes'
 
 //# The noteRoutes and noteController are all set up,
@@ -22,8 +23,23 @@ import testRoutes from 'routes/testRoutes'
 //# Ultimately, when we switch the blogs to a user protected version, we
 //# will need to integrate with Cognito
 
+//# Validation Library:
+//# Net Ninja uses just validator: npm i validator (https://www.npmjs.com/package/validator)
+//# https://www.youtube.com/watch?v=sRFI6L0a38E&list=PL4cUxeGkcC9g8OhpOZxNdhXggFz2lOuCT&index=4
+//# Brad Traversy sometimes uses express-validator.
+//# I think express-validator is a little too clunky. However, I'm also leaning toward zod.
+//# https://www.youtube.com/watch?v=L6BE-U3oy80
+
+//# Prisma ???
+
+//# async ??? https://www.npmjs.com/package/async
+
 import noteRoutes from 'routes/noteRoutes'
 import { connectDB } from 'config/db'
+
+/* ========================================================================
+
+======================================================================== */
 
 ///////////////////////////////////////////////////////////////////////////
 //

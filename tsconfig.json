@@ -10,6 +10,7 @@
       "controllers/*": ["controllers/*"],
       "middleware/*": ["middleware/*"],
       "functions/*": ["functions/*"],
+      "utils/*": ["utils/*"],
       "config/*": ["config/*"],
       "public/*": ["public/*"],
       "routes/*": ["routes/*"]

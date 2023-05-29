@@ -1,4 +1,5 @@
 import { Request, Response, Router, NextFunction } from 'express'
+//# import { z } from 'zod'
 
 const router = Router()
 
@@ -8,7 +9,7 @@ const router = Router()
 
 router.get('/', (_req: Request, res: Response, _next: NextFunction) => {
   return res.status(200).json({
-    message: "'/test' called (added esbuild)!",
+    message: "'/test' called (added zod and utils)!",
     environment: process.env.NODE_ENV || '???'
   })
 })
