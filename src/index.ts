@@ -1,16 +1,98 @@
+// Third-party imports
+import path from 'path'
 import express from 'express'
+import mongoose from 'mongoose'
 import cors from 'cors'
 import * as dotenv from 'dotenv'
-// Usage: console.log('Cookies: ', JSON.stringify(req.cookies, null, 2))
-import cookieParser from 'cookie-parser'
-import testRoutes from './routes/testRoutes'
-import { v4 as uuid } from 'uuid'
+import cookieParser from 'cookie-parser' // Usage: console.log('Cookies: ', JSON.stringify(req.cookies, null, 2))
+import colors from 'colors'
+import morgan from 'morgan'
+
+// Custom imports
+
+import testRoutes from 'routes/testRoutes'
+
+//# The noteRoutes and noteController are all set up,
+//# Next I need to build out the rest of the CRUD
+//# Ultimatley, I want to switch to a BLOG CRUD.
+
+//# Add swagger
+
+//# Add TSDoc : https://tsdoc.org/
+
+//# Ultimately, when we switch the blogs to a user protected version, we
+//# will need to integrate with Cognito
+
+//# Validation Library:
+//# Net Ninja uses just validator: npm i validator (https://www.npmjs.com/package/validator)
+//# https://www.youtube.com/watch?v=sRFI6L0a38E&list=PL4cUxeGkcC9g8OhpOZxNdhXggFz2lOuCT&index=4
+//# Brad Traversy sometimes uses express-validator.
+//# I think express-validator is a little too clunky. However, I'm also leaning toward zod.
+//# https://www.youtube.com/watch?v=L6BE-U3oy80
+
+//# Prisma ???
+
+//# async ??? https://www.npmjs.com/package/async
+
+import noteRoutes from 'routes/noteRoutes'
+import { connectDB } from 'config/db'
+
+/* ========================================================================
+
+======================================================================== */
+
+///////////////////////////////////////////////////////////////////////////
+//
+// Gotcha regarding nodemon:
+//
+// The dev script is simply: "nodemon src/index.ts"
+// This just seems to work, with one exception, it won't update when .js files are changed.
+// The solution was to add a nodemon.json file:
+//
+//   { "watch": ["src"], "ext": "*" }
+//
+//
+// Or just do "dev": "nodemon src/index.ts -e '*'",
+//
+// That fixes the issue of watching non-ts files, but then we still need
+// to be able to use alias paths through ts-alias. The docs for tsc-alias
+// suggest this for watching changes to the files.
+//
+//  "build:watch": "tsc && (concurrently \"tsc -w\" \"tsc-alias -w\")"
+//
+//
+// Thus our dev script must include: \"nodemon dist/index.js\" like this:
+//
+//   "dev": "tsc && (concurrently \"tsc -w\" \"tsc-alias -w\" \"nodemon dist/index.js\")",
+//
+//
+// If you want, you can add a delay to nodemon. This will prevent nodemon from restarting several times:
+//
+//   [3] [nodemon] restarting due to changes...
+//   [3] [nodemon] restarting due to changes...
+//   [3] [nodemon] restarting due to changes...
+//   [3] [nodemon] restarting due to changes...
+//   [3] [nodemon] restarting due to changes...
+//
+//
+// I actually don't think we need to explicitly tell nodemon to look at dist/index.js, so I omitted that part.
+// Finally, I added the script that manually adds views and public folders to the dist.
+//
+//  "dev": "tsc && (concurrently \"tsc -w\" \"tsc-alias -w\" \"npm run add-public-and-views-to-dist\" \"nodemon --delay 0.25\")",
+//
+//
+// And that's how it's done! This solution works fine, but eventually, I would like to move the build process
+// over to esbuild, remove "add-public-and-views-to-dist" and then update what the dev script does.
+//
+///////////////////////////////////////////////////////////////////////////
 
 dotenv.config()
 const app = express()
+connectDB()
+colors.enable()
 
-const message = 'Whuddup!'
-console.log(message)
+// const message = 'Whuddup!'
+// console.log(message)
 
 ///////////////////////////////////////////////////////////////////////////
 //
@@ -39,8 +121,6 @@ console.log(message)
 //   })
 //
 ///////////////////////////////////////////////////////////////////////////
-
-// let x = 2
 
 /* ======================
   CORS Global Middleware
@@ -92,23 +172,41 @@ app.use(cors())
 Other Global Middleware
 ====================== */
 
+app.use(morgan('dev')) // https://www.youtube.com/watch?v=QUbksAVFe8g
 app.use(express.json()) // Needed for reading req.body.
 app.use(express.urlencoded({ extended: false })) // For handling FormData
 app.use(cookieParser())
 
+// Serve static files. For example, when the index.html is served,
+// it uses: <link rel="stylesheet" href="./styles/main.css" />
+app.use('/', express.static(path.join(__dirname, '/public')))
+
 /* ======================
-
+      index.html
 ====================== */
+///////////////////////////////////////////////////////////////////////////
+//
+// Dave Gray : MERN Stack Project video 2 at 21:00 uses the regex.
+// https://www.youtube.com/watch?v=H-9l-gTq-C4&list=PL0Zuz27SZ-6P4dQUsoDatjEGpmBpcOW8V&index=2
+// Gotcha: the build process uses tsc, which does not copy .html, .css, etc.
+// You can probably solve this using esbuild to transpile the code.
+// However, if you know exactly what files and folders you want to include, you
+// can modify the package.json build command as follows. That said, cp may not work
+// in windows systems. If that's the case, then you can use the copyfiles package.
+//
+//   https://vccolombo.github.io/blog/tsc-how-to-copy-non-typescript-files-when-building/
+//
+//   "add-public-and-views-to-dist": "cp -r src/public src/views dist",
+//   "build": "rimraf dist && tsc && tsc-alias && npm run add-public-and-views-to-dist",
+//
+//
+// Note: Changes to the files in views and/or public will still not be evident until
+// you stop and restart the dev server.
+//
+///////////////////////////////////////////////////////////////////////////
 
-app.get('/', (req, res) => {
-  const body = req.body || {}
-
-  return res.status(200).json({
-    message: 'Skip Step Test 2.',
-    envTest: process.env.TEST,
-    id: uuid(),
-    body: body
-  })
+app.get('^/$|/index(.html)?', (req, res) => {
+  return res.status(200).sendFile(path.join(__dirname, '/views', 'index.html'))
 })
 
 /* ======================
@@ -116,14 +214,21 @@ app.get('/', (req, res) => {
 ====================== */
 
 app.use('/test', testRoutes)
+app.use('/notes', noteRoutes)
 
 /* ======================
 
 ====================== */
 
-app.use((req, res, _next) => {
+// I've also seen people do this:
+//
+// app.use((req, res, _next) => {
+//   return res.status(404).json({ error: 'Not Found' })
+// })
+
+app.all('*', (req, res) => {
   return res.status(404).json({
-    error: 'Not Found'
+    error: 'Not Found!'
   })
 })
 
@@ -141,6 +246,16 @@ app.use((req, res, _next) => {
 
 const PORT = process.env.PORT || 5000
 
-app.listen(PORT, () => {
-  console.log(`Example app listening on port ${PORT}`)
+mongoose.connection.once('open', () => {
+  console.log('\n\nCalling app.listen() now that the database is connected.')
+  app.listen(PORT, () => {
+    console.log(`Server listening on port ${PORT}!\n`.rainbow.bold)
+  })
+})
+
+// This will probably never fire because db.ts catches it beforehand.
+mongoose.connection.on('error', (err) => {
+  const message: any = // Typescript complains about the bright variants.
+    'Something went wrong with the mongoose connection (index.ts)!!!'
+  console.log('\n\n', message.brightRed.bold, '\n\n', err)
 })

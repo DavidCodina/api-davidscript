@@ -5,7 +5,15 @@
     // I'm using tsc-alias because tsconfig-paths didn't work for me. You may run into issues with jest:
     // https://medium.com/@fmoessle/typescript-paths-with-ts-node-ts-node-dev-and-jest-671deacf6428
     "paths": {
-      "functions/*": ["functions/*"]
+      "models/*": ["models/*"],
+      "views/*": ["views/*"],
+      "controllers/*": ["controllers/*"],
+      "middleware/*": ["middleware/*"],
+      "functions/*": ["functions/*"],
+      "utils/*": ["utils/*"],
+      "config/*": ["config/*"],
+      "public/*": ["public/*"],
+      "routes/*": ["routes/*"]
     },
     "strict": true,
     "allowJs": true,
@@ -17,7 +25,8 @@
     "module": "commonjs",
     //# ??? "moduleResolution": "node",
     "outDir": "./dist",
-    "sourceMap": true,
+    //# This is often set to true, but I don't currently have a need for it.
+    "sourceMap": false,
 
     // See Mike North intermediate typescript for why you might not want to do this.
     // This may be needed for imports like import fs from 'fs' when module and
@@ -36,9 +45,6 @@
   "include": ["src/**/*"],
   "exclude": [
     "node_modules/**/*",
-    ".serverless/**/*",
-    ".webpack/**/*",
-    "_warmup/**/*",
     ".vscode/**/*",
     "**/*.test.*",
     "**/*.spec.*",
